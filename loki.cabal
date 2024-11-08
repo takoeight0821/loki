@@ -60,31 +60,38 @@ source-repository head
 common warnings
   ghc-options: -Wall
 
+common deps
+  build-depends:
+    , base       ^>=4.20
+    , effectful
+    , parsec
+
 library
   -- Import common warning flags.
-  import:           warnings
+  import:             warnings, deps
 
   -- Modules exported by the library.
-  exposed-modules:  MyLib
+  exposed-modules:
 
   -- Modules included in this library but not exported.
-  -- other-modules:
+  other-modules: Prelude
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:
 
   -- Other library packages from which modules are imported.
-  build-depends:    base ^>=4.20
+  build-depends:      base ^>=4.20
 
   -- Directories containing source files.
-  hs-source-dirs:   src
+  hs-source-dirs:     src
 
   -- Base language which the package is written in.
-  default-language: GHC2021
+  default-language:   GHC2021
+  default-extensions: NoImplicitPrelude
 
 executable loki
   -- Import common warning flags.
-  import:           warnings
+  import:           warnings, deps
 
   -- .hs or .lhs file containing the Main module.
   main-is:          Main.hs
@@ -108,7 +115,7 @@ executable loki
 
 test-suite loki-test
   -- Import common warning flags.
-  import:           warnings
+  import:           warnings, deps
 
   -- Base language which the package is written in.
   default-language: GHC2021
