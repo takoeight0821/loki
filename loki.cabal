@@ -76,8 +76,8 @@ library
 
   -- Modules exported by the library.
   exposed-modules:
-    Loki.Core
     Loki.Eval
+    Loki.Core
     Loki.Prelude
 
   -- Modules included in this library but not exported.
