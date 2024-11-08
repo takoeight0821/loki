@@ -62,9 +62,13 @@ common warnings
 
 common deps
   build-depends:
-    , base       ^>=4.20
+    , base           ^>=4.20
+    , containers
     , effectful
     , parsec
+    , pretty-simple
+    , text
+    , string-conversions
 
 library
   -- Import common warning flags.
@@ -72,9 +76,12 @@ library
 
   -- Modules exported by the library.
   exposed-modules:
+    Loki.Core
+    Loki.Eval
+    Loki.Prelude
 
   -- Modules included in this library but not exported.
-  other-modules: Prelude
+  -- other-modules:
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:
@@ -87,7 +94,15 @@ library
 
   -- Base language which the package is written in.
   default-language:   GHC2021
-  default-extensions: NoImplicitPrelude
+  default-extensions:
+    NoImplicitPrelude
+    DerivingStrategies
+    OverloadedRecordDot
+    OverloadedStrings
+    PatternSynonyms
+    RecordWildCards
+    NoFieldSelectors
+    BlockArguments
 
 executable loki
   -- Import common warning flags.
