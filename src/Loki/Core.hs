@@ -131,7 +131,7 @@ class LocationRepr a where
 instance LocationRepr CallStack where
   locationFile cs =
     case getCallStack cs of
-      [] -> "Unknown location"
+      [] -> "unknown"
       ((_, SrcLoc {srcLocFile}) : _) -> srcLocFile
   locationLine cs =
     case getCallStack cs of
