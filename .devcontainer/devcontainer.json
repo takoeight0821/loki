@@ -7,12 +7,14 @@
 		"dockerfile": "Dockerfile"
 	},
 	"remoteEnv": {
-		"PATH": "${containerEnv:PATH}:/home/vscode/.ghcup/bin:/home/vscode/.cabal/bin"
+		"PATH": "${containerEnv:PATH}:/home/vscode/.ghcup/bin:/home/vscode/.cabal/bin:${containerEnv:HOME}/.dotnet:${containerEnv:HOME}/.dotnet/tools",
+		"DOTNET_ROOT": "${containerEnv:HOME}/.dotnet"
 	},
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"haskell.haskell"
+				"haskell.haskell",
+				"Ionide.Ionide-fsharp"
 			]
 		}
 	}

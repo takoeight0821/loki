@@ -12,3 +12,13 @@ ENV BOOTSTRAP_HASKELL_INSTALL_HLS=1
 ENV BOOTSTRAP_HASKELL_HLS_VERSION=2.9.0.1
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
+
+# https://learn.microsoft.com/ja-jp/dotnet/core/install/linux-scripted-manual#scripted-install
+
+WORKDIR /home/vscode
+
+RUN wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
+
+RUN chmod +x dotnet-install.sh
+
+RUN ./dotnet-install.sh --channel 9.0
