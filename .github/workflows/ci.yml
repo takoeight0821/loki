@@ -14,6 +14,9 @@ concurrency:
 
 jobs:
   build:
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}/haskell
     name: GHC ${{ matrix.ghc-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
