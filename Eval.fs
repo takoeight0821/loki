@@ -48,7 +48,7 @@ module Eval =
             let cont = evalConsumer env cont
 
             match (name, args) with
-            | ("add", [ Int x; Int y ]) -> apply loc env cont (Int(x + y))
+            | ("add", [ Int x; Int y ]) -> apply env cont (Int(x + y))
             | ("print", [ Int x ]) ->
                 printfn "%d" x
                 Int x
@@ -70,7 +70,7 @@ module Eval =
         | Core.Cut(loc, prod, cont) ->
             let value = evalProducer env prod
             let covalue = evalConsumer env cont
-            apply loc env covalue value
+            apply env covalue value
 
     and private evalProducer env =
         function
@@ -84,7 +84,8 @@ module Eval =
         | Core.Label(loc, name) -> env.LookupCo loc name
         | Core.Mu'(_, name, stmt) -> Mu'(name, stmt)
 
-    and private apply (loc: Location) (env: Env) (cont: Covalue) (value: Value) =
+    // Apply a value to a continuation.
+    and private apply (env: Env) (cont: Covalue) (value: Value) =
         match cont with
         | Finish -> value
         | Mu'(name, stmt) ->
