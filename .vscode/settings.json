@@ -1,3 +1,4 @@
 {
-    "FSharp.inlayHints.parameterNames": false
+    "FSharp.inlayHints.parameterNames": false,
+    "editor.tabSize": 4
 }
