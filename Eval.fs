@@ -11,7 +11,9 @@ module Eval =
 
     type Value = Int of int
 
-    type Covalue = Finish
+    type Covalue =
+        | Finish
+        | Mu' of Name * Core.Statement
 
     type Env =
         { Values: Map<Name, Value>
@@ -80,9 +82,13 @@ module Eval =
         function
         | Core.Finish _ -> Finish
         | Core.Label(loc, name) -> env.LookupCo loc name
+        | Core.Mu'(_, name, stmt) -> Mu'(name, stmt)
 
     and private apply (loc: Location) (env: Env) (cont: Covalue) (value: Value) =
         match cont with
-        | Covalue.Finish -> value
+        | Finish -> value
+        | Mu'(name, stmt) ->
+            let env = env.Add name value
+            evalStmt env stmt
 
     let Run (stmt: Core.Statement) = evalStmt Env.empty stmt

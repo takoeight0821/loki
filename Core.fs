@@ -27,11 +27,13 @@ module Core =
     and Consumer =
         | Finish of Location
         | Label of Location * Name
+        | Mu' of Location * Name * Statement
 
         member this.Location() =
             match this with
             | Finish loc -> loc
             | Label(loc, _) -> loc
+            | Mu'(loc, _, _) -> loc
 
     and Statement =
         | Prim of Location * string * Producer list * Consumer
@@ -50,6 +52,26 @@ module Core =
     let finish () = Finish(Location.FromStackFrame())
 
     let label name = Label(Location.FromStackFrame(), name)
+
+    let mu' name body =
+        Mu'(Location.FromStackFrame(), name, body)
+
+    let let' name term body =
+        let label = Name.FromString "let"
+
+        Mu(
+            Location.FromStackFrame(),
+            label,
+            Cut(
+                Location.FromStackFrame(),
+                term,
+                Mu'(
+                    Location.FromStackFrame(),
+                    name,
+                    Cut(Location.FromStackFrame(), body, Label(Location.FromStackFrame(), label))
+                )
+            )
+        )
 
     let prim name args =
         let label = Name.FromString name

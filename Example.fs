@@ -18,3 +18,12 @@ module Example =
 
     let result2 = Eval.Run(cut ex2 (finish ()))
     printfn "%A" result2
+
+    let ex3: Core.Producer =
+        let x = Name.FromString "x"
+        let' x (Producer.int 1) (prim "print" [ Producer.var x ])
+
+    printfn "%A" ex3
+
+    let result3 = Eval.Run(cut ex3 (finish ()))
+    printfn "%A" result3
