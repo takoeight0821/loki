@@ -13,33 +13,57 @@ module Eval =
 
     type Covalue =
         | Finish
-        | Mu' of Name * Core.Statement
+        | Mu' of Env * Name * Core.Statement
 
-    type Env =
-        { Values: Map<Name, Value>
-          Covalues: Map<Name, Covalue> }
+    and Env =
+        { Values: Map<Name, Value> list
+          Covalues: Map<Name, Covalue> list
+          Toplevels: Map<Name, Core.Definition> }
 
         static member empty =
-            { Values = Map.empty
-              Covalues = Map.empty }
+            { Values = []
+              Covalues = []
+              Toplevels = Map.empty }
 
         member this.Lookup loc name =
-            match Map.tryFind name this.Values with
-            | Some value -> value
-            | None -> raise (UnknownVariable(loc, name))
+            match this.Values with
+            | [] -> raise (UnknownVariable(loc, name))
+            | values :: rest ->
+                match Map.tryFind name values with
+                | Some value -> value
+                | None -> { this with Values = rest }.Lookup loc name
 
         member this.Add name value =
             { this with
-                Values = Map.add name value this.Values }
+                Values =
+                    match this.Values with
+                    | [] -> [ Map.empty.Add(name, value) ]
+                    | values :: rest -> Map.add name value values :: rest }
 
         member this.LookupCo loc name =
-            match Map.tryFind name this.Covalues with
-            | Some value -> value
-            | None -> raise (UnknownVariable(loc, name))
+            match this.Covalues with
+            | [] -> raise (UnknownVariable(loc, name))
+            | covalues :: rest ->
+                match Map.tryFind name covalues with
+                | Some value -> value
+                | None -> { this with Covalues = rest }.LookupCo loc name
+
 
         member this.AddCo name value =
             { this with
-                Covalues = Map.add name value this.Covalues }
+                Covalues =
+                    match this.Covalues with
+                    | [] -> [ Map.empty.Add(name, value) ]
+                    | covalues :: rest -> Map.add name value covalues :: rest }
+
+        member this.LookupToplevel name =
+            match Map.tryFind name this.Toplevels with
+            | Some value -> value
+            | None -> raise (UnknownVariable(Location.FromStackFrame(), name))
+
+        member this.AddToplevel(value: Core.Definition) =
+            { this with
+                Toplevels = Map.add value.Name value this.Toplevels }
 
     let rec private evalStmt (env: Env) =
         function
@@ -48,12 +72,14 @@ module Eval =
             let cont = evalConsumer env cont
 
             match (name, args) with
-            | ("add", [ Int x; Int y ]) -> apply env cont (Int(x + y))
+            | ("add", [ Int x; Int y ]) -> apply cont (Int(x + y))
+            | ("sub", [ Int x; Int y ]) -> apply cont (Int(x - y))
+            | ("mul", [ Int x; Int y ]) -> apply cont (Int(x * y))
             | ("print", [ Int x ]) ->
                 printfn "%d" x
                 Int x
             | _ -> raise (UnknownPrimitive(loc, name))
-        | Core.Switch(_, prod, clauses, def) ->
+        | Core.Switch(loc, prod, clauses, def) ->
             let value = evalProducer env prod
 
             let rec go clauses =
@@ -67,29 +93,45 @@ module Eval =
             let covalue = evalConsumer env cont
             let env = env.AddCo label covalue
             evalStmt env stmt
-        | Core.Cut(loc, prod, cont) ->
+        | Core.Cut(_, prod, cont) ->
             let value = evalProducer env prod
             let covalue = evalConsumer env cont
-            apply env covalue value
+            apply covalue value
+        | Core.Invoke(_, name, args, conts) ->
+            let def = env.LookupToplevel name
+            let args = List.map (evalProducer env) args
+            let conts = List.map (evalConsumer env) conts
+
+            let env =
+                List.fold2 (fun (env: Env) name value -> env.Add name value) env def.Params args
+
+            let env =
+                List.fold2 (fun (env: Env) name cont -> env.AddCo name cont) env def.Returns conts
+
+            evalStmt env def.Body
+
+
 
     and private evalProducer env =
         function
         | Core.Var(loc, name) -> env.Lookup loc name
-        | Core.Const(_, Core.Int n) -> Value.Int n
+        | Core.Const(loc, Core.Int n) -> Int n
         | p -> raise (UnexpectedProducer(p.Location(), p))
 
     and private evalConsumer env =
         function
-        | Core.Finish _ -> Finish
+        | Core.Finish loc -> Finish
         | Core.Label(loc, name) -> env.LookupCo loc name
-        | Core.Mu'(_, name, stmt) -> Mu'(name, stmt)
+        | Core.Mu'(loc, name, stmt) -> Mu'(env, name, stmt)
 
     // Apply a value to a continuation.
-    and private apply (env: Env) (cont: Covalue) (value: Value) =
+    and private apply (cont: Covalue) (value: Value) =
         match cont with
         | Finish -> value
-        | Mu'(name, stmt) ->
+        | Mu'(env, name, stmt) ->
             let env = env.Add name value
             evalStmt env stmt
 
     let Run (stmt: Core.Statement) = evalStmt Env.empty stmt
+
+    let RunWith env (stmt: Core.Statement) = evalStmt env stmt

@@ -35,23 +35,34 @@ module Core =
             | Label(loc, _) -> loc
             | Mu'(loc, _, _) -> loc
 
+        static member label(name, ?loc) =
+            let loc = defaultArg loc (Location.FromStackFrame())
+            Label(loc, name)
+
     and Statement =
         | Prim of Location * string * Producer list * Consumer
         | Switch of Location * Producer * (Const * Statement) list * Statement
         | Cut of Location * Producer * Consumer
+        | Invoke of Location * Name * Producer list * Consumer list
 
         member this.Location() =
             match this with
             | Prim(loc, _, _, _) -> loc
             | Switch(loc, _, _, _) -> loc
             | Cut(loc, _, _) -> loc
+            | Invoke(loc, _, _, _) -> loc
+
+    and Definition =
+        { Name: Name
+          Params: Name list
+          Returns: Name list
+          Body: Statement }
 
     let mu name body =
         Mu(Location.FromStackFrame(), name, body)
 
     let finish () = Finish(Location.FromStackFrame())
 
-    let label name = Label(Location.FromStackFrame(), name)
 
     let mu' name body =
         Mu'(Location.FromStackFrame(), name, body)
@@ -103,3 +114,6 @@ module Core =
 
     let cut prod cont =
         Cut(Location.FromStackFrame(), prod, cont)
+
+    let invoke name args conts =
+        Invoke(Location.FromStackFrame(), name, args, conts)
