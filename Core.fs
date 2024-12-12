@@ -15,14 +15,6 @@ module Core =
             | Const(loc, _) -> loc
             | Do(loc, _, _) -> loc
 
-        static member var(name, ?loc) =
-            let loc = defaultArg loc (Location.FromStackFrame())
-            Var(loc, name)
-
-        static member int(value, ?loc) =
-            let loc = defaultArg loc (Location.FromStackFrame())
-            Const(loc, Int value)
-
     and Const = Int of int
 
     and Consumer =
@@ -36,10 +28,6 @@ module Core =
             | Finish loc -> loc
             | Label(loc, _) -> loc
             | Then(loc, _, _) -> loc
-
-        static member label(name, ?loc) =
-            let loc = defaultArg loc (Location.FromStackFrame())
-            Label(loc, name)
 
     and Statement =
         | Prim of Location * string * Producer list * Consumer
@@ -60,14 +48,8 @@ module Core =
           Returns: Name list
           Body: Statement }
 
-    let mu name body =
-        Do(Location.FromStackFrame(), name, body)
-
     let finish () = Finish(Location.FromStackFrame())
 
-
-    let mu' name body =
-        Then(Location.FromStackFrame(), name, body)
 
     let let' name term body =
         let label = Name.FromString "let"

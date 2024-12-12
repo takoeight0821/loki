@@ -5,8 +5,9 @@ open Name
 module Example =
     open Core
 
-    (*
-    let ex1: Core.Producer = prim "add" [ Producer.int 1; Producer.int 2 ]
+    let ex1: Core.Producer =
+        let loc = Location.FromStackFrame()
+        prim "add" [ Const(loc, Int(1)); Const(loc, Int(2)) ]
     printfn "%A" ex1
 
 
@@ -14,7 +15,8 @@ module Example =
     printfn "%A" result1
 
     let ex2: Core.Producer =
-        switch (Producer.int 1) [ Int 1, prim "print" [ Producer.int 1 ] ] (Producer.int 3)
+        let loc = Location.FromStackFrame()
+        switch (Const(loc, Int(1))) [ Int 1, prim "print" [ Const(loc, Int(1)) ] ] (Const(loc, Int(3)))
 
     printfn "%A" ex2
 
@@ -23,13 +25,13 @@ module Example =
 
     let ex3: Core.Producer =
         let x = Name.FromString "x"
-        let' x (Producer.int 1) (prim "print" [ Producer.var x ])
+        let loc = Location.FromStackFrame()
+        let' x (Const(loc, Int(1))) (prim "print" [ Var(loc, x) ])
 
     printfn "%A" ex3
 
     let result3 = Eval.Run(cut ex3 (finish ()))
     printfn "%A" result3
-    *)
 
     let ex4: Definition =
         let name = Name.FromString "fac"
@@ -46,11 +48,11 @@ module Example =
             Switch(
                 loc,
                 Var(loc, param),
-                [ Int 0, Cut(loc, Const(loc, Int 1), Label(loc, ret)) ],
+                [ Int 0, Cut(loc, Const(loc, Int(1)), Label(loc, ret)) ],
                 Prim(
                     loc,
                     "sub",
-                    [ Var(loc, param); Const(loc, Int 1) ],
+                    [ Var(loc, param); Const(loc, Int(1)) ],
                     Then(
                         loc,
                         x,
@@ -69,6 +71,6 @@ module Example =
     let result4 =
         let env = Eval.Env.empty.AddToplevel ex4
         let loc = Location.FromStackFrame()
-        Eval.RunWith env (Invoke(loc, ex4.Name, [ Producer.int 5 ], [ Finish(loc) ]))
+        Eval.RunWith env (Invoke(loc, ex4.Name, [ Const(loc, Int(5)) ], [ Finish(loc) ]))
 
     printfn "%A" result4
