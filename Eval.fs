@@ -89,7 +89,7 @@ module Eval =
                 | (_, _ :: rest) -> go rest
 
             go clauses
-        | Core.Cut(_, (Core.Mu(_, label, stmt)), cont) ->
+        | Core.Cut(_, (Core.Do(_, label, stmt)), cont) ->
             let covalue = evalConsumer env cont
             let env = env.AddCo label covalue
             evalStmt env stmt
@@ -122,7 +122,7 @@ module Eval =
         function
         | Core.Finish loc -> Finish
         | Core.Label(loc, name) -> env.LookupCo loc name
-        | Core.Mu'(loc, name, stmt) -> Mu'(env, name, stmt)
+        | Core.Then(loc, name, stmt) -> Mu'(env, name, stmt)
 
     // Apply a value to a continuation.
     and private apply (cont: Covalue) (value: Value) =

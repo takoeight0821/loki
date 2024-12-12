@@ -6,13 +6,14 @@ module Core =
     type Producer =
         | Var of Location * Name
         | Const of Location * Const
-        | Mu of Location * Name * Statement
+        /// Do binds a variable to a continuation and executes a statement.
+        | Do of Location * Name * Statement
 
         member this.Location() =
             match this with
             | Var(loc, _) -> loc
             | Const(loc, _) -> loc
-            | Mu(loc, _, _) -> loc
+            | Do(loc, _, _) -> loc
 
         static member var(name, ?loc) =
             let loc = defaultArg loc (Location.FromStackFrame())
@@ -27,13 +28,14 @@ module Core =
     and Consumer =
         | Finish of Location
         | Label of Location * Name
-        | Mu' of Location * Name * Statement
+        // Then binds a variable to a result and executes a statement.
+        | Then of Location * Name * Statement
 
         member this.Location() =
             match this with
             | Finish loc -> loc
             | Label(loc, _) -> loc
-            | Mu'(loc, _, _) -> loc
+            | Then(loc, _, _) -> loc
 
         static member label(name, ?loc) =
             let loc = defaultArg loc (Location.FromStackFrame())
@@ -59,24 +61,24 @@ module Core =
           Body: Statement }
 
     let mu name body =
-        Mu(Location.FromStackFrame(), name, body)
+        Do(Location.FromStackFrame(), name, body)
 
     let finish () = Finish(Location.FromStackFrame())
 
 
     let mu' name body =
-        Mu'(Location.FromStackFrame(), name, body)
+        Then(Location.FromStackFrame(), name, body)
 
     let let' name term body =
         let label = Name.FromString "let"
 
-        Mu(
+        Do(
             Location.FromStackFrame(),
             label,
             Cut(
                 Location.FromStackFrame(),
                 term,
-                Mu'(
+                Then(
                     Location.FromStackFrame(),
                     name,
                     Cut(Location.FromStackFrame(), body, Label(Location.FromStackFrame(), label))
@@ -87,7 +89,7 @@ module Core =
     let prim name args =
         let label = Name.FromString name
 
-        Mu(
+        Do(
             Location.FromStackFrame(),
             label,
             Prim(Location.FromStackFrame(), name, args, Label(Location.FromStackFrame(), label))
@@ -101,7 +103,7 @@ module Core =
                 (fun (c, p) -> (c, Cut(Location.FromStackFrame(), p, Label(Location.FromStackFrame(), label))))
                 clauses
 
-        Mu(
+        Do(
             Location.FromStackFrame(),
             label,
             Switch(

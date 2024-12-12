@@ -51,14 +51,14 @@ module Example =
                     loc,
                     "sub",
                     [ Var(loc, param); Const(loc, Int 1) ],
-                    Mu'(
+                    Then(
                         loc,
                         x,
                         Invoke(
                             loc,
                             name,
                             [ Var(loc, x) ],
-                            [ Mu'(loc, r, Prim(loc, "mul", [ Var(loc, param); Var(loc, r) ], Label(loc, ret))) ]
+                            [ Then(loc, r, Prim(loc, "mul", [ Var(loc, param); Var(loc, r) ], Label(loc, ret))) ]
                         )
                     )
                 )
